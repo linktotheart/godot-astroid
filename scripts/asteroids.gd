@@ -3,13 +3,26 @@ class_name Astroid extends Area2D
 var movement := Vector2(0, -1)
 var speed := 250.00
 
-signal exploded(pos, size)
+signal exploded(pos, size, points)
 
 @onready var sprite_2d = $Sprite2D
 @onready var collision_shape_2d = $CollisionShape2D
 
 enum sizes{LARGE, SMALL, MEDIUM}
 @export var size = sizes.LARGE
+
+var points: int:
+	get:
+		match size:
+			sizes.LARGE:
+				return 100
+			sizes.MEDIUM:
+				return 100
+			sizes.SMALL:
+				return 100
+			_:
+				return 0
+		
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	rotation = randf_range(0, 2*PI)
@@ -47,5 +60,11 @@ func _physics_process(delta):
 
 
 func explode():
-	emit_signal("exploded", global_position, size)
+	emit_signal("exploded", global_position, size, points)
 	queue_free()
+
+
+func _on_body_entered(body):
+	if body is Player:
+		var player = body
+		player.die()

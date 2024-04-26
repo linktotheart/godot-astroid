@@ -1,16 +1,23 @@
-extends CharacterBody2D
+class_name Player extends CharacterBody2D
 
 @export var speed := 15.0
 @export var max_speed := 370.0
 @export var rot_speed := 260.0
 @onready var muzzle = $Muzzle
+@onready var sprite_2d = $Sprite2D
+@onready var cshape = $CollisionShape2D
 
 var laser_sn = preload("res://scenes/laser.tscn")
 var shoot_timer := 0.15
-signal laser_shot(laser)
 var shoot_cd := false
+var alive := true
+
+signal laser_shot(laser)
+signal died
 
 func _process(delta):
+	if !alive:
+		return
 	if Input.is_action_pressed("shoot"):
 		if !shoot_cd:
 			shoot_cd = true
@@ -19,7 +26,8 @@ func _process(delta):
 			shoot_cd = false			
 
 func _physics_process(delta):
-	
+	if !alive:
+		return
 	# get inputs
 	var input_vector := Vector2(0, Input.get_axis("forward","backward"))
 	velocity += input_vector.rotated(rotation) * speed
@@ -49,7 +57,26 @@ func _physics_process(delta):
 
 
 func shoot_lasers():
+	if !alive:
+		return
 	var laser = laser_sn.instantiate()
 	laser.global_position = muzzle.global_position
 	laser.rotation = rotation
 	emit_signal("laser_shot", laser)
+
+func die():
+	if alive == true:
+		alive = false
+		emit_signal("died")
+		sprite_2d.visible = false
+		cshape.set_deferred("disabled", true)
+
+		
+func respawn(pos):
+	if alive == false:
+		alive = true
+		global_position = pos
+		velocity = Vector2.ZERO
+		sprite_2d.visible = true
+		cshape.set_deferred("disabled", false)
+
